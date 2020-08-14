@@ -122,20 +122,28 @@ class NuttsshServer(asyncssh.SSHServer):
         """Called when the client presents a key for authentication."""
         # Look up the peer address, to support the "from" key option.
         peer_addr = self.conn.get_extra_info('peername')[0]
-
-        options = self.authorized_keys.validate(key, username, peer_addr)
-
         keystr = key.export_public_key().decode().strip()
 
-        # None means no matching key, so deny access
-        if options is None:
-            logging.debug("Rejecting key %s %s", keystr, username)
-            return False
+        if self.authorized_keys is None:
+            options = default_access
+            logging.info('Adding new key for user %s with default permissions' % username)
+            options_str = ','.join([f'{k}="{v}"' for k in default_access.keys() for v in default_access[k]])
+            key_data = '%s %s %s@%s\n' % (options_str, keystr, username, peer_addr)
+            self.authorized_keys = asyncssh.import_authorized_keys(key_data)
+            with open(KEYS_FILE, 'a') as f:
+                f.write(key_data)
+        else:
+            options = self.authorized_keys.validate(key, username, peer_addr)
 
-        logging.debug("Accepting key %s %s %s",
-                      str(options), keystr, username)
+            # None means no matching key, so deny access
+            if options is None:
+                logging.debug("Rejecting key %s %s", keystr, username)
+                return False
 
-        self.process_key_options(options)
+            logging.debug("Accepting key %s %s %s",
+                        str(options), keystr, username)
+
+            self.process_key_options(options)
 
         return True
 
