@@ -6,16 +6,16 @@
 # This file handle the main SSH server, authentication and creation of
 # circuits.
 
+import os
 import enum
 import logging
 import collections
-import os
 import asyncssh
 
 from . import util
 
 LISTEN_HOST = '0.0.0.0'
-LISTEN_PORT = 2222
+LISTEN_PORT = int(os.environ.get('SSH_LISTEN_PORT', 2222))
 HOST_KEY_FILE = os.environ.get('SSH_HOST_KEY_FILE', 'ssh_host_key')
 KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE', 'authorized_keys')
 
@@ -47,7 +47,7 @@ class NuttsshDaemon:
 
     async def start(self):
         """
-        Aysynchronously start the SSH server, and process connections.
+        Asynchronously start the SSH server, and process connections.
 
         This server will listen on the configured host and port.
         """
