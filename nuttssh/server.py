@@ -38,6 +38,9 @@ access_levels = {
     'list': {Permissions.LIST_LISTENERS},
 }
 
+default_access = {
+    'access': ['listen', 'initiate']
+}
 
 class NuttsshDaemon:
     """Daemon that listens on a port and serves multiple connections."""
