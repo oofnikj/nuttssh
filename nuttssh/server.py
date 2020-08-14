@@ -34,7 +34,8 @@ Predefined access levels, mapping to a more fine-grained list of permissions.
 """
 access_levels = {
     'listen': {Permissions.LISTEN},
-    'initiate': {Permissions.INITIATE, Permissions.LIST_LISTENERS},
+    'initiate': {Permissions.INITIATE},
+    'list': {Permissions.LIST_LISTENERS},
 }
 
 
