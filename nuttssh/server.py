@@ -167,6 +167,14 @@ class NuttsshServer(asyncssh.SSHServer):
         self.username = username
         try:
             self.authorized_keys = asyncssh.read_authorized_keys(KEYS_FILE)
+        except FileNotFoundError:
+            logging.info("Generating authorized keys file")
+            with open(KEYS_FILE, 'w') as f:
+                pass
+            return True
+        except ValueError:
+            logging.info("Authorized keys file is empty")
+            return True
         except Exception as e:
             # No point in continuing without authorized keys
             logging.error("Failed to read key file: %s", e)
