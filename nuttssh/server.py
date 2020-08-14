@@ -53,10 +53,21 @@ class NuttsshDaemon:
         """
         def server_factory():
             return NuttsshServer(self)
+        
+        try:
+            with open(HOST_KEY_FILE, 'r') as f:
+                f.close()
+            server_host_keys=[HOST_KEY_FILE]
+        except FileNotFoundError:
+            server_host_keys = []
+            logging.info("Generating host keys")
+            for alg in ['ecdsa-sha2-nistp256', 'ssh-ed25519', 'ssh-rsa']:
+                server_host_keys.append(asyncssh.generate_private_key(alg))
+
 
         await asyncssh.create_server(
             server_factory, LISTEN_HOST, LISTEN_PORT,
-            server_host_keys=[HOST_KEY_FILE])
+            server_host_keys=server_host_keys)
 
 
 class NuttsshServer(asyncssh.SSHServer):
