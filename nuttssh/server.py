@@ -108,7 +108,7 @@ class NuttsshServer(asyncssh.SSHServer):
         # Look up the peer address, to support the "from" key option.
         peer_addr = self.conn.get_extra_info('peername')[0]
 
-        options = self.authorized_keys.validate(key, peer_addr)
+        options = self.authorized_keys.validate(key, username, peer_addr)
 
         keystr = key.export_public_key().decode().strip()
 
