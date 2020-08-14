@@ -38,6 +38,9 @@ access_levels = {
     'list': {Permissions.LIST_LISTENERS},
 }
 
+"""
+Default access granted to new users
+"""
 default_access = {
     'access': ['listen', 'initiate']
 }
