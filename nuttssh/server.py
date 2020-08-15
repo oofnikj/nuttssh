@@ -240,8 +240,8 @@ class NuttsshServer(asyncssh.SSHServer):
         # TODO: Move upwards, but that introduces a circular dependency
         from . import commands
 
-        def process_factory(process):
-            commands.handle_command(self, process, process.command)
+        async def process_factory(process):
+            await commands.handle_command(self, process, process.command)
 
         # We should return a session object, that needs to handle all parts of
         # session setup (env vars, pty request, command request, etc.). We let

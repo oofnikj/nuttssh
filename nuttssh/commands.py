@@ -10,7 +10,7 @@ from . import util
 from .server import Permissions
 
 
-def handle_command(server, process, command):
+async def handle_command(server, process, command):
     """
     Parse and handle a single command from a client.
 
