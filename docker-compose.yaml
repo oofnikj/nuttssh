@@ -1,0 +1,8 @@
+version: '3.5'
+services:
+  nutssh:
+    build: .
+    ports:
+      - '2222:2222'
+    volumes:
+      - './keys:/nuttssh/keys:ro'
