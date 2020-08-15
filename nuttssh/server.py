@@ -236,7 +236,7 @@ class NuttsshServer(asyncssh.SSHServer):
             raise asyncssh.ChannelOpenError(
                 asyncssh.SSH_OPEN_ADMINISTRATIVELY_PROHIBITED,
                 "Insufficient permissions to connect", "en")
-        return self.connect_to_slave(dest_host, dest_port)
+        return self.connect_to_server(dest_host, dest_port)
 
     def session_requested(self):
         """
@@ -302,36 +302,36 @@ class NuttsshServer(asyncssh.SSHServer):
         # client (index 0)
         name, index = util.split_hostname_index(host, 0)
 
-        # Find the slave
-        slaves = self.daemon.listener_names[name]
-        if not slaves:
-            logging.error("Slave %s not found", name)
+        # Find the server
+        servers = self.daemon.listener_names[name]
+        if not servers:
+            logging.error("Server %s not found", name)
             raise asyncssh.ChannelOpenError(
                 asyncssh.OPEN_CONNECT_FAILED,
-                "Slave %s not found" % (name,), "en")
+                "Server %s not found" % (name,), "en")
 
         try:
-            slave = slaves[index]
+            server = servers[index]
         except IndexError:
-            logging.error("Invalid index %s for slave %s", index, name)
+            logging.error("Invalid index %s for server %s", index, name)
             raise asyncssh.ChannelOpenError(
                 asyncssh.OPEN_CONNECT_FAILED,
-                "Invalid index %s for slave %s" % (index, name), "en")
+                "Invalid index %s for server %s" % (index, name), "en")
 
         # Find the port
-        logging.debug("%s", slave.listeners)
-        listener = slave.listeners.get(port, None)
+        logging.debug("%s", server.listeners)
+        listener = server.listeners.get(port, None)
         if not listener:
-            logging.error("Port %s on slave %s not found",
-                          port, slave.hostname)
+            logging.error("Port %s on server %s not found",
+                          port, server.hostname)
             raise asyncssh.ChannelOpenError(
                 asyncssh.OPEN_CONNECT_FAILED,
-                "Port %s on slave %s not found" % (port, slave.hostname),
+                "Port %s on server %s not found" % (port, server.hostname),
                 "en")
 
-        # This creates a connection back to the slave that requested the port
+        # This creates a connection back to the server that requested the port
         # forward (using the listener). It uses two instances of the
-        # SSHForwarder class to forward data between this slave connection and
+        # SSHForwarder class to forward data between this server connection and
         # the requested incoming connection.
         # TODO: SSHForwarder is not documented as a public API. Should we use
         # it?
