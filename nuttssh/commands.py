@@ -23,9 +23,19 @@ async def handle_command(server, process, command):
                     the SSH client, or None when no command was passed (and a
                     shell was requested).
     """
-    # TODO: Properly implement command parsing, using e.g. click. For now, just
-    # always run the list command
-    list(server, process)
+    supported_commands = ['listeners'] 
+    process.stdout.write(f'Hello {server.username}!\n')
+    if server.listeners:
+        await forwarding(server, process)
+        return
+    if command == None:
+        process.stderr.write('This server does not support interactive sessions.\r\n')
+        process.exit(1)
+    elif command not in supported_commands:
+        process.stderr.write('Unsupported command.\r\n')
+        process.exit(1)
+    else:
+        eval(f'{command}(server, process)')
 
 
 def listeners(server, process):
