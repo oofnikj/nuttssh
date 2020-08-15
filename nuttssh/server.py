@@ -74,7 +74,8 @@ class NuttsshDaemon:
 
         await asyncssh.listen(LISTEN_HOST, LISTEN_PORT,
             server_host_keys=server_host_keys,
-            server_factory=server_factory)
+            server_factory=server_factory,
+            allow_pty=False)
 
 
 class NuttsshServer(asyncssh.SSHServer):
