@@ -7,7 +7,7 @@
 # administrate the server.
 
 from . import util
-from .server import Permissions
+from .server import Permissions, SERVER_FQDN, LISTEN_PORT
 
 
 async def handle_command(server, process, command):

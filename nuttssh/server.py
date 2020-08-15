@@ -18,6 +18,7 @@ LISTEN_HOST = '0.0.0.0'
 LISTEN_PORT = int(os.environ.get('SSH_LISTEN_PORT', 2222))
 HOST_KEY_FILE = os.environ.get('SSH_HOST_KEY_FILE', 'ssh_host_key')
 KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE', 'authorized_keys')
+SERVER_FQDN = os.environ.get('SSH_SERVER_FQDN', 'localhost')
 
 
 class Permissions(enum.Enum):
