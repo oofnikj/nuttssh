@@ -3,7 +3,6 @@ __pycache__
 *.swp
 *.swo
 authorized_keys
-*_key
-*_key.pub
+keys
 venv
 *.egg-info

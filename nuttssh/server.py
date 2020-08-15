@@ -16,8 +16,10 @@ from . import util
 
 LISTEN_HOST = '0.0.0.0'
 LISTEN_PORT = int(os.environ.get('SSH_LISTEN_PORT', 2222))
-HOST_KEY_FILE = os.environ.get('SSH_HOST_KEY_FILE', 'ssh_host_key')
-KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE', 'authorized_keys')
+HOST_KEY_FILE = ([os.environ.get('SSH_HOST_KEY_FILE_ECDSA', 'keys/ecdsa-sha2-nistp256')] +
+                 [os.environ.get('SSH_HOST_KEY_FILE_ED25519', 'keys/ssh-ed25519')] +
+                 [os.environ.get('SSH_HOST_KEY_FILE_RSA', 'keys/ssh-rsa')])
+AUTHORIZED_KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE', 'keys/authorized_keys')
 SERVER_FQDN = os.environ.get('SSH_SERVER_FQDN', 'localhost')
 
 
@@ -62,15 +64,19 @@ class NuttsshDaemon:
         def server_factory():
             return NuttsshServer(self)
         
-        try:
-            with open(HOST_KEY_FILE, 'r') as f:
-                f.close()
-            server_host_keys=[HOST_KEY_FILE]
-        except FileNotFoundError:
-            server_host_keys = []
-            logging.info("Generating host keys")
-            for alg in ['ecdsa-sha2-nistp256', 'ssh-ed25519', 'ssh-rsa']:
-                server_host_keys.append(asyncssh.generate_private_key(alg))
+        algs = ('ecdsa-sha2-nistp256', 'ssh-ed25519', 'ssh-rsa')
+        server_host_keys = []
+        for i, keyfile in enumerate(HOST_KEY_FILE):
+            try:
+                with open(keyfile, 'r') as f:
+                    server_host_keys.append(keyfile)
+            except FileNotFoundError:
+                logging.info(f"Generating host key: {algs[i]}")
+                key = asyncssh.generate_private_key(algs[i])
+                server_host_keys.append(key)
+                open(keyfile, 'w').write(key.export_private_key().decode())
+                open(f'{keyfile}.pub', 'w').write(key.export_public_key().decode())
+
 
 
         await asyncssh.listen(LISTEN_HOST, LISTEN_PORT,
@@ -135,7 +141,7 @@ class NuttsshServer(asyncssh.SSHServer):
             options_str = ','.join([f'{k}="{v}"' for k in default_access.keys() for v in default_access[k]])
             key_data = '%s %s %s@%s\n' % (options_str, keystr, username, peer_addr)
             self.authorized_keys = asyncssh.import_authorized_keys(key_data)
-            with open(KEYS_FILE, 'a') as f:
+            with open(AUTHORIZED_KEYS_FILE, 'a') as f:
                 f.write(key_data)
         else:
             options = self.authorized_keys.validate(key, username, peer_addr)
@@ -180,10 +186,10 @@ class NuttsshServer(asyncssh.SSHServer):
         """The client has started authentication with the given username."""
         self.username = username
         try:
-            self.authorized_keys = asyncssh.read_authorized_keys(KEYS_FILE)
+            self.authorized_keys = asyncssh.read_authorized_keys(AUTHORIZED_KEYS_FILE)
         except FileNotFoundError:
             logging.info("Generating authorized keys file")
-            with open(KEYS_FILE, 'w') as f:
+            with open(AUTHORIZED_KEYS_FILE, 'w') as f:
                 pass
             return True
         except ValueError:
