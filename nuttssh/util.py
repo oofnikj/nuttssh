@@ -7,6 +7,7 @@
 # circuits.
 
 import re
+import random
 
 
 def split_hostname_index(name, default=None):
@@ -24,5 +25,10 @@ def split_hostname_index(name, default=None):
 
 
 def join_hostname_index(hostname, index):
-    """Joins a hostname with an index, reversing splti_hostname_index()."""
+    """Joins a hostname with an index, reversing split_hostname_index()."""
     return "{}~{}".format(hostname, index)
+
+def rand_suffix(length=7):
+    """Generate a random suffix of `length` chars"""
+    charset = '0123456789abcdefghijklmnopqrstuvwxyz'
+    return ''.join(random.choice(charset) for i in range(length))

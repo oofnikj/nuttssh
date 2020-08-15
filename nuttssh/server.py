@@ -171,6 +171,7 @@ class NuttsshServer(asyncssh.SSHServer):
             logging.warning("Multiple hostnames specified, using the first")
         self.hostname = hostnames[0]
         self.aliases = options.get('alias', [])
+        self.aliases.append(f'{self.hostname}-{util.rand_suffix()}')
         self.names = [self.hostname] + self.aliases
 
     def begin_auth(self, username):
