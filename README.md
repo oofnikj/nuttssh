@@ -62,7 +62,7 @@ The easiest way to run Nuttssh is with Docker:
 
     docker build -t nuttssh .
     docker run --name nuttssh -p2222:2222 \
-      -v $(pwd)/keys:/nuttssh/keys nuttssh_nuttssh
+      -v $(pwd)/keys:/nuttssh/keys nuttssh
 
 Host keys will be generated on first run and saved to the `keys` directory.
 
@@ -133,7 +133,7 @@ options can be used. For example:
 
     ssh -n user1@nuttssh.example.org -p 2222 -R 6379:localhost:6379
 
-This connects to a Nuttssh server running on `nuttsh.example.org`, port 2222.
+This connects to a Nuttssh server running on `nuttssh.example.org`, port 2222.
 Our hostname (`user1`) is passed as the username. Use `-n` so we don't redirect
 `stdin` to Nutssh, making it impossible to send to the background (e.g. by 
 appending `&` to the command). Upon connecting, a (virtual) port 6379 is opened
@@ -162,7 +162,7 @@ host or port by specifying them with the `-R` option.
 
 For example:
 
-    ssh -n user1@nuttsh.example.org -p 2222 -R 9736:localhost:6379
+    ssh -n user1@nuttssh.example.org -p 2222 -R 9736:localhost:6379
 
 This requests a virtual port 9736 on the Nuttssh server and connects any incoming
 circuits to port 6379 on localhost. Note that this is completely invisible to
@@ -190,7 +190,7 @@ is convenient for routing SSH connections through a circuit, but does not work
 for other kinds of connections. Fortunately, ssh allows other ways to set up
 these circuit connections as well.
 
-Note that this makes two SSH connections, one to the Nuttsh server and one to
+Note that this makes two SSH connections, one to the Nuttssh server and one to
 the listening client. This also means that authentication must happen twice.
 
 
