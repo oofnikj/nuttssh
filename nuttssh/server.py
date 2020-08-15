@@ -265,8 +265,8 @@ class NuttsshServer(asyncssh.SSHServer):
         # If this is the first, prepend ourselves to the list of listening
         # names
         if not self.listeners:
-            for name in self.names:
-                self.daemon.listener_names[name].insert(0, self)
+            for alias in self.aliases:
+                self.daemon.listener_names[alias].insert(0, self)
 
         if port in self.listeners:
             logging.error("Duplicate listen port %s requested, refusing the"
@@ -289,15 +289,15 @@ class NuttsshServer(asyncssh.SSHServer):
         """
         del self.listeners[port]
 
-        # If the last listener was closed, unregister our names
+        # If the last listener was closed, unregister our aliases
         if not self.listeners:
-            for name in self.names:
-                self.daemon.listener_names[name].remove(self)
+            for alias in self.aliases:
+                self.daemon.listener_names[alias].remove(self)
 
         logging.info("Removed virtual listener for %s, port %s",
                      self.names, port)
 
-    async def connect_to_slave(self, host, port):
+    async def connect_to_server(self, host, port):
         # Split off any index from the name, defaulting to the most recent
         # client (index 0)
         name, index = util.split_hostname_index(host, 0)
