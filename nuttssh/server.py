@@ -72,9 +72,9 @@ class NuttsshDaemon:
                 server_host_keys.append(asyncssh.generate_private_key(alg))
 
 
-        await asyncssh.create_server(
-            server_factory, LISTEN_HOST, LISTEN_PORT,
-            server_host_keys=server_host_keys)
+        await asyncssh.listen(LISTEN_HOST, LISTEN_PORT,
+            server_host_keys=server_host_keys,
+            server_factory=server_factory)
 
 
 class NuttsshServer(asyncssh.SSHServer):
