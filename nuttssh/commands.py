@@ -28,12 +28,14 @@ async def handle_command(server, process, command):
     if server.listeners:
         await forwarding(server, process)
         return
+
     if command == None:
         process.stderr.write('This server does not support interactive sessions.\r\n')
-        process.exit(1)
+
     elif command not in supported_commands:
         process.stderr.write('Unsupported command.\r\n')
         process.exit(1)
+
     else:
         eval(f'{command}(server, process)')
 
@@ -79,12 +81,11 @@ async def forwarding(server, process):
     server_alias = server.aliases[0]
     service_ports = list(server.listeners.keys())
     virtual_ports = [server.listeners[p].listen_port for p in service_ports]
-    client_conn_str = f'ssh {SERVER_FQDN} -p {LISTEN_PORT} '
+    client_conn_str = f'ssh -n {SERVER_FQDN} -p {LISTEN_PORT} '
     for idx, p in enumerate(service_ports):
         client_conn_str += f'-L {service_ports[idx]}:{server_alias}:{virtual_ports[idx]} '
 
     process.stdout.write(f'Virtual listener for ports {service_ports} created.\n' +
         f'Connect a client by running\n  {client_conn_str}\n')
-    # we don't allocate a PTY, but this keeps the channel open until ^C
     await process.wait_closed()
     process.exit(0)
