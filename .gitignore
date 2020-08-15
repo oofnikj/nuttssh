@@ -1,8 +1,8 @@
+.vscode
 *.pyc
 __pycache__
 *.swp
 *.swo
-authorized_keys
 keys
 venv
 *.egg-info
