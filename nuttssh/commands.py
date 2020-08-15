@@ -28,7 +28,7 @@ async def handle_command(server, process, command):
     list(server, process)
 
 
-def list(server, process):
+def listeners(server, process):
     """List all active listeners."""
     # TODO: Put this in a decorator?
     if Permissions.LIST_LISTENERS not in server.permissions:
