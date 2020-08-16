@@ -4,30 +4,42 @@
 # LICENSE file for the full text.
 
 import sys
+import signal
 import asyncio
 import logging
 
 from . import server
 
 
-def main():
-    """Main entry point, which runs a nuttssh server."""
-    # http://asyncssh.readthedocs.io/en/latest/api.html#asyncssh.set_debug_level
-    # asyncssh.set_debug_level(3)
-    try:
-        logging.basicConfig(level=logging.DEBUG)
+async def shutdown(signal, loop):
+    logging.error(f"Received signal {signal.name}, shutting down")
+    tasks = [task for task in asyncio.all_tasks()
+        if task is not asyncio.current_task()]
+    
+    for task in tasks:
+        logging.debug("Cancelling task %s" % task)
+        task.cancel()
+    
+    await asyncio.gather(*tasks, return_exceptions=True)
+    loop.stop()
 
-        # Start up the daemon
-        loop = asyncio.get_event_loop()
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+
+    signals = (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT)
+    loop = asyncio.get_event_loop()
+    for s in signals:
+        loop.add_signal_handler(
+            s, lambda s=s: asyncio.create_task(shutdown(s, loop))
+        )
+    try:
         daemon = server.NuttsshDaemon()
-        loop.run_until_complete(daemon.start())
+        loop.create_task(daemon.start())
+        loop.run_forever()
+
     except Exception as exc:
         sys.exit('Error starting server: ' + str(exc))
+    finally:
+        loop.close()
 
-    # Keep running until all async stuff is finished
-    loop.run_forever()
-
-
-# This file is called by python's -m option, so run the main function in that
-# case
 main()
