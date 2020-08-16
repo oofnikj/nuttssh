@@ -64,9 +64,9 @@ The easiest way to run Nuttssh is with Docker:
 
     docker build -t nuttssh .
     docker run --name nuttssh -p2222:2222 \
-      -v $(pwd)/keys:/nuttssh/keys nuttssh
+      -v keys:/nuttssh/keys nuttssh
 
-Host keys will be generated on first run and saved to the `keys` directory.
+Host keys will be generated on first run and preserved in a Docker volume.
 
 ## Configuration
 
