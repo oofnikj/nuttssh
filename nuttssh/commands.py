@@ -23,13 +23,13 @@ async def handle_command(server, process, command):
                     the SSH client, or None when no command was passed (and a
                     shell was requested).
     """
-    supported_commands = ['listeners'] 
+    supported_commands = ['listeners']
     process.stdout.write(f'Hello {server.username}!\n')
     if server.listeners:
         await forwarding(server, process)
         return
 
-    if command == None:
+    if command is None:
         process.stderr.write('This server does not support interactive sessions.\r\n')
 
     elif command not in supported_commands:
@@ -77,6 +77,7 @@ def listeners(server, process):
         process.stdout.write("  None\n")
     process.exit(0)
 
+
 async def forwarding(server, process):
     server_alias = server.aliases[0]
     service_ports = list(server.listeners.keys())
@@ -85,7 +86,7 @@ async def forwarding(server, process):
     for idx, p in enumerate(service_ports):
         client_conn_str += f'-L {service_ports[idx]}:{server_alias}:{virtual_ports[idx]} '
 
-    process.stdout.write(f'Virtual listener for ports {service_ports} created.\n' +
-        f'Connect a client by running\n  {client_conn_str}\n')
+    process.stdout.write(f'Virtual listener for ports {service_ports} created.\n'
+        + f'Connect a client by running\n  {client_conn_str}\n')
     await process.wait_closed()
     process.exit(0)

@@ -16,9 +16,9 @@ from . import util
 
 LISTEN_HOST = '0.0.0.0'
 LISTEN_PORT = int(os.environ.get('SSH_LISTEN_PORT', 2222))
-HOST_KEY_FILE = ([os.environ.get('SSH_HOST_KEY_FILE_ECDSA', 'keys/ecdsa-sha2-nistp256')] +
-                 [os.environ.get('SSH_HOST_KEY_FILE_ED25519', 'keys/ssh-ed25519')] +
-                 [os.environ.get('SSH_HOST_KEY_FILE_RSA', 'keys/ssh-rsa')])
+HOST_KEY_FILE = ([os.environ.get('SSH_HOST_KEY_FILE_ECDSA', 'keys/ecdsa-sha2-nistp256')]
+               + [os.environ.get('SSH_HOST_KEY_FILE_ED25519', 'keys/ssh-ed25519')]
+               + [os.environ.get('SSH_HOST_KEY_FILE_RSA', 'keys/ssh-rsa')])
 AUTHORIZED_KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE', 'keys/authorized_keys')
 SERVER_FQDN = os.environ.get('SSH_SERVER_FQDN', 'localhost')
 
@@ -48,6 +48,7 @@ default_access = {
     'access': ['listen', 'initiate']
 }
 
+
 class NuttsshDaemon:
     """Daemon that listens on a port and serves multiple connections."""
 
@@ -63,12 +64,12 @@ class NuttsshDaemon:
         """
         def server_factory():
             return NuttsshServer(self)
-        
+
         algs = ('ecdsa-sha2-nistp256', 'ssh-ed25519', 'ssh-rsa')
         server_host_keys = []
         for i, keyfile in enumerate(HOST_KEY_FILE):
             try:
-                with open(keyfile, 'r') as f:
+                with open(keyfile, 'r'):
                     server_host_keys.append(keyfile)
             except FileNotFoundError:
                 logging.info(f"Generating host key: {algs[i]}")
@@ -189,7 +190,7 @@ class NuttsshServer(asyncssh.SSHServer):
             self.authorized_keys = asyncssh.read_authorized_keys(AUTHORIZED_KEYS_FILE)
         except FileNotFoundError:
             logging.info("Generating authorized keys file")
-            with open(AUTHORIZED_KEYS_FILE, 'w') as f:
+            with open(AUTHORIZED_KEYS_FILE, 'w'):
                 pass
             return True
         except ValueError:
