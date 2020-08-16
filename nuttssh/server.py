@@ -15,8 +15,6 @@ from . import util, commands, config
 from .permissions import *
 
 
-
-
 class NuttsshDaemon:
     """Daemon that listens on a port and serves multiple connections."""
 
@@ -45,6 +43,7 @@ class NuttsshDaemon:
                 server_host_keys.append(key)
                 open(keyfile, 'w').write(key.export_private_key().decode())
                 open(f'{keyfile}.pub', 'w').write(key.export_public_key().decode())
+                os.chmod(keyfile, 0o600)
 
 
 
