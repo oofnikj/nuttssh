@@ -13,7 +13,7 @@ actual TCP ports on the server are opened). Then another SSH client can request
 to connect to that listening port, using a configurable name to identify the
 client whose port to connect to.
 
-This works very similar to using a normal SSH server with port forwarding,
+This works very similar to using a normal SSH server with port forwarding, 
 except that when using Nuttssh:
  - No actual TCP ports are opened on the server.
  - Clients do not need to actually authenticate as a system user. Nuttssh
@@ -34,19 +34,20 @@ Nuttssh still young, but should be usable already. There is still plenty of
 room for improvement, especially with regard to configurability.
 
 ## Terminology
+
  - Nuttssh server: The central server that accepts connections from various
    hosts and connects them together.
  - Initiator: A host that connects to the Nuttssh server and requests
-   listening ports by SSH remote port forwarding (`ssh -R`). 
+   listening ports by SSH remote port forwarding ( `ssh -R` ). 
  - Listener: A host that connects to the Nuttssh server
    and requests a connection to an initiator by SSH local port forwarding 
-   (`ssh -L`).
+   ( `ssh -L` ).
  - Circuit: the virtual connection between two hosts through the Nuttssh
    server. Called a circuit to disambiguate from the normal connection between
    the client and the Nuttssh server.
 
    Note that a host is typically either listening or initiating, but given
-   sufficient permissions,  a client could also act as both.
+   sufficient permissions, a client could also act as both.
 
 **NOTE**: This is a fork of the [original Nuttssh](https://github.com/matthijskooijman/nuttssh)
 by Matthijs Kooijman. This version changes the default behavior to *trust any SSH key on connect*, 
@@ -58,6 +59,7 @@ This version also fixes some compatibility issues with AsyncSSH 2.3.0, adds
 some additional configuration parameters, native Docker support.
 
 ## Installing / running
+
 The easiest way to run Nuttssh is with Docker:
 
     docker build -t nuttssh .
@@ -67,10 +69,12 @@ The easiest way to run Nuttssh is with Docker:
 Host keys will be generated on first run and saved to the `keys` directory.
 
 ## Configuration
+
 Configuration is through some globals at the top of `server.py` that can be
 overridden with environment variables.
 
 ### Access control
+
 To control access to the nuttssh server, an `authorized_keys` file must be
 present. If it isn't, `nuttssh` will create a blank one. This file uses the same
 format as OpenSSH's `authorized_keys` file. Each line must contain a single
@@ -87,15 +91,15 @@ and a comment.
 
 Currently, the following options are supported:
  - `access` to specify the permissions for the client. Supported values are
-   `initiate` (to allow opening listening ports), `listen` (to allow
+`initiate` (to allow opening listening ports), `listen` (to allow
    connecting to listening ports), and `list` (to view all connected clients).
-   This option can be specified more than once,
+   This option can be specified more than once, 
    to give more than one type of permission. New users are granted `initiate`
    and `listen` permissions by default.
  - `from` to limit connections to specific hosts. The value is a
    comma-separated list of patterns. Each pattern can be a glob pattern (using
-   `*` and `?`, e.g.  `"*.mydomain.tld"`) matched against the address and
-   hostname, or a CIDR-style address and mask (e.g.  `"192.168.1.0/24"`). A
+`*` and `?` , e.g. `"*.mydomain.tld"` ) matched against the address and
+   hostname, or a CIDR-style address and mask (e.g. `"192.168.1.0/24"` ). A
    connection is allowed if it matches at least one of the patterns in the
    list. This option can be specified multiple times, in which case a
    connection must match (one element of) each `from` option separately.
@@ -109,32 +113,34 @@ that is present in the `authorized_keys` file is used, even when another is
 also present and has more permissions or other options.
 
 ### Server hostnames and aliases
+
 Each connected client has a hostname, and an optional list of alias names. The
 hostname is used in various places to refer to a client, while only the aliases 
 can be used to select a listening client to connect to.
 
 By default, the username specified by the client is used as its hostname (this
 looks a bit like a hack, but it seems like the cleanest approach). Using the
-`hostname` option in `authorized_keys`, this hostname can be overridden for a
+`hostname` option in `authorized_keys` , this hostname can be overridden for a
 given connection. Using the `alias` option, additional alias names can be
 specified (the option must be specified multiple times for multiple aliases).
 
-When multiple listening clients each claim the same name (hostname or alias),
+When multiple listening clients each claim the same name (hostname or alias), 
 the last client to connect will be reached using that name. To reach the other
 clients, you can add an index to the hostname. E.g. when two listening clients
 both use `test` as their hostname, you can connect to the most recent one using
-`test` (or `test~0`) and the older one using `test~1`.
+`test` (or `test~0` ) and the older one using `test~1` .
 <!-- TODO: remove this indexing feature, it's redundant by using random suffixes instead -->
 
 ### Connecting listening clients
+
 Connections to the Nuttssh server use the normal SSH protocol, so can use a
 regular SSH client. To open up a listening port, the normal port forwarding
 options can be used. For example:
 
     ssh -n user1@nuttssh.example.org -p 2222 -R 6379:localhost:6379
 
-This connects to a Nuttssh server running on `nuttssh.example.org`, port 2222.
-Our hostname (`user1`) is passed as the username. Use `-n` so we don't redirect
+This connects to a Nuttssh server running on `nuttssh.example.org` , port 2222.
+Our hostname ( `user1` ) is passed as the username. Use `-n` so we don't redirect
 `stdin` to Nutssh, making it impossible to send to the background (e.g. by 
 appending `&` to the command). Upon connecting, a (virtual) port 6379 is opened
 on the Nuttssh server, ready for listening.
@@ -143,11 +149,11 @@ Nuttssh will print out a command for a listener to connect, something like
     ssh -n user2@nuttssh.example.org -p 2222 -L 6379:user1-a4h5ig8:6379
 
 The listener (user2) will then be able to connect to `localhost:6379` on
-user1's machine as if it were running on user2's `localhost:6379`.
+user1's machine as if it were running on user2's `localhost:6379` .
 
 Typically you want a listening client to be continuously connected (and
-reconnect on errors). This is easy using `autossh`, just replace `ssh` with
-`autossh`, and that will take care of autoconnecting.
+reconnect on errors). This is easy using `autossh` , just replace `ssh` with
+`autossh` , and that will take care of autoconnecting.
 
 By default, `autossh` uses additional port forwards to test connectivity, which
 do not work with Nuttssh so these should be disabled in favor of letting SSH
@@ -155,8 +161,9 @@ itself do keepalive. Additionally, when running unattended, `autossh` should be
 told to always keep retrying, even on startup errors.
 
 #### Changing port numbers
+
 The above examples all assume that the listening clients requests a listening
-port 6379 and forwards any incoming circuits to `localhost:6379`, which is probably
+port 6379 and forwards any incoming circuits to `localhost:6379` , which is probably
 the common case. However, it is also possible to forward to a different local
 host or port by specifying them with the `-R` option.
 
@@ -167,18 +174,19 @@ For example:
 This requests a virtual port 9736 on the Nuttssh server and connects any incoming
 circuits to port 6379 on localhost. Note that this is completely invisible to
 the initiating clients, since these only need to specify the hostname
-(`user1-<suffix>`) and virtual listening port (9736).
+( `user1-<suffix>` ) and virtual listening port (9736).
 
 ### Connecting initiating clients
+
 Initiating clients also use the plain SSH protocol and can use a normal SSH
 client. For example, to set up an SSH connection to the listening client from
 the previous example, using a circuit through the NuttSSH server:
 
     ssh -J nuttssh.example.org:2222 user1
 
-This instructs ssh to first connect to `nuttssh.example.org`, port 2222 and
+This instructs ssh to first connect to `nuttssh.example.org` , port 2222 and
 then inside that connection, ask the Nuttssh server to set up a circuit
-(tunneled connection) to `user1`, port 22 (not specified explicitly). This
+(tunneled connection) to `user1` , port 22 (not specified explicitly). This
 hostname and port combination is then matched by the Nuttssh server to the
 previously connected listening client and the circuit is routed to that client.
 Finally, the listening client then completes the circuit by locally connecting
@@ -193,18 +201,19 @@ these circuit connections as well.
 Note that this makes two SSH connections, one to the Nuttssh server and one to
 the listening client. This also means that authentication must happen twice.
 
-
 #### Forwarding stdin/stdout through a circuit
+
 SSH can also forward data on its stdin and stdout streams into a circuit. For
 example:
 
     ssh -W user1:22 nuttssh.example.org -p 2222
 
 This opens a circuit to `user1` on port 22, and connects it to the stdin and
-stdout of the local ssh client. The `-N` option is implied by `-W`, so does not
+stdout of the local ssh client. The `-N` option is implied by `-W` , so does not
 need to be separately specified.
 
 #### Routing a SOCKS proxy requests through a circuit
+
 SSH supports exposing a SOCKS proxy. This proxy is implemented completely in
 the local SSH client, and allows (local) programs, such as a webbrowser, to
 route all of their traffic through the proxy. In this case, this means all
@@ -225,13 +234,15 @@ resolved (which will fail) and only the resulting IP address is included in the
 proxy request.
 
 ### Using ssh config files
+
 All of the above mentioned ssh options (except `-N` it seems) can also be
 configured through SSH configuration file options, so you can define some
 presets and apply them by just passing a hostname to ssh. See the `ssh_config`
 manpage for more info.
 
 # Contributing
-This is an open project, and contributions are welcomed. For bug reports,
+
+This is an open project, and contributions are welcomed. For bug reports, 
 feature suggestions and questions, please use the github issue tracker. To
 contribute patches, use github pull requests.
 
@@ -246,20 +257,22 @@ To check the coding style of the code, the flake8 tool is used. As a
 convenience, a `Makefile` is provided that allows running `make check` to run
 all checks (currently only flake8). This should not return any errors after any
 commit, so make sure to run it regularly. To fix import sorting errors, run
-`make sort`.
+`make sort` .
 
 # License (also setup.py)
+
 Nuttssh was written by Matthijs Kooijman. Its sources, as well as the
 accompanying documentation and other files in this repository are available
-under the MIT license. See the [`LICENSE`](LICENSE) file for the full license text.
+under the MIT license. See the [ `LICENSE` ](LICENSE) file for the full license text.
 
 # About Nuttssh
+
 Nuttssh was originally created for the [Meetjestad!](http://www.meetjestad.net)
 project, to provide lightweight remote control for LoRa gateways spread
 throughout the city on varying internet connections (usually not publically
 reachable due to NAT). After some initial experiments with a reverse SSH
 connection and SSH channel multiplexing (which worked, but resulted in fragile
-code), the current approach of using port forwards was implemented. For this,
+code), the current approach of using port forwards was implemented. For this, 
 some inspiration was taking from
 [ssh-proxy](https://github.com/luke-jr/ssh-proxy), which also uses remote port
 forwarding (but uses key fingerprints to identify clients, and probably
