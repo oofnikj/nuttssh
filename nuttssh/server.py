@@ -7,46 +7,14 @@
 # circuits.
 
 import os
-import enum
 import logging
 import collections
 import asyncssh
 
-from . import util
-
-LISTEN_HOST = '0.0.0.0'
-LISTEN_PORT = int(os.environ.get('SSH_LISTEN_PORT', 2222))
-HOST_KEY_FILE = ([os.environ.get('SSH_HOST_KEY_FILE_ECDSA', 'keys/ecdsa-sha2-nistp256')]
-               + [os.environ.get('SSH_HOST_KEY_FILE_ED25519', 'keys/ssh-ed25519')]
-               + [os.environ.get('SSH_HOST_KEY_FILE_RSA', 'keys/ssh-rsa')])
-AUTHORIZED_KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE', 'keys/authorized_keys')
-SERVER_FQDN = os.environ.get('SSH_SERVER_FQDN', 'localhost')
+from . import util, commands, config
+from .permissions import *
 
 
-class Permissions(enum.Enum):
-    # Open (virtual) ports for listening
-    LISTEN = 1
-    # Connecting to (virtual) ports
-    INITIATE = 2
-    # Connecting to (virtual) ports
-    LIST_LISTENERS = 3
-
-
-"""
-Predefined access levels, mapping to a more fine-grained list of permissions.
-"""
-access_levels = {
-    'listen': {Permissions.LISTEN},
-    'initiate': {Permissions.INITIATE},
-    'list': {Permissions.LIST_LISTENERS},
-}
-
-"""
-Default access granted to new users
-"""
-default_access = {
-    'access': ['listen', 'initiate']
-}
 
 
 class NuttsshDaemon:
@@ -67,7 +35,7 @@ class NuttsshDaemon:
 
         algs = ('ecdsa-sha2-nistp256', 'ssh-ed25519', 'ssh-rsa')
         server_host_keys = []
-        for i, keyfile in enumerate(HOST_KEY_FILE):
+        for i, keyfile in enumerate(config.HOST_KEY_FILE):
             try:
                 with open(keyfile, 'r'):
                     server_host_keys.append(keyfile)
@@ -80,7 +48,7 @@ class NuttsshDaemon:
 
 
 
-        await asyncssh.listen(LISTEN_HOST, LISTEN_PORT,
+        await asyncssh.listen(config.LISTEN_HOST, config.LISTEN_PORT,
             server_host_keys=server_host_keys,
             server_factory=server_factory,
             allow_pty=False)
@@ -142,7 +110,7 @@ class NuttsshServer(asyncssh.SSHServer):
             options_str = ','.join([f'{k}="{v}"' for k in default_access.keys() for v in default_access[k]])
             key_data = '%s %s %s@%s\n' % (options_str, keystr, username, peer_addr)
             self.authorized_keys = asyncssh.import_authorized_keys(key_data)
-            with open(AUTHORIZED_KEYS_FILE, 'a') as f:
+            with open(config.AUTHORIZED_KEYS_FILE, 'a') as f:
                 f.write(key_data)
         else:
             options = self.authorized_keys.validate(key, username, peer_addr)
@@ -187,10 +155,10 @@ class NuttsshServer(asyncssh.SSHServer):
         """The client has started authentication with the given username."""
         self.username = username
         try:
-            self.authorized_keys = asyncssh.read_authorized_keys(AUTHORIZED_KEYS_FILE)
+            self.authorized_keys = asyncssh.read_authorized_keys(config.AUTHORIZED_KEYS_FILE)
         except FileNotFoundError:
             logging.info("Generating authorized keys file")
-            with open(AUTHORIZED_KEYS_FILE, 'w'):
+            with open(config.AUTHORIZED_KEYS_FILE, 'w'):
                 pass
             return True
         except ValueError:
@@ -245,8 +213,6 @@ class NuttsshServer(asyncssh.SSHServer):
 
         A session can be a shell, command or subsystem request (e.g. sftp).
         """
-        # TODO: Move upwards, but that introduces a circular dependency
-        from . import commands
 
         async def process_factory(process):
             await commands.handle_command(self, process, process.command)

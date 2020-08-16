@@ -6,8 +6,8 @@
 # This file handles commands that can be executed through SSH, to inspect and
 # administrate the server.
 
-from . import util
-from .server import Permissions, SERVER_FQDN, LISTEN_PORT
+from . import util, config
+from .permissions import Permissions
 
 
 async def handle_command(server, process, command):
@@ -82,7 +82,7 @@ async def forwarding(server, process):
     server_alias = server.aliases[0]
     service_ports = list(server.listeners.keys())
     virtual_ports = [server.listeners[p].listen_port for p in service_ports]
-    client_conn_str = f'ssh -n {SERVER_FQDN} -p {LISTEN_PORT} '
+    client_conn_str = f'ssh -n {config.SERVER_FQDN} -p {config.LISTEN_PORT} '
     for idx, p in enumerate(service_ports):
         client_conn_str += f'-L {service_ports[idx]}:{server_alias}:{virtual_ports[idx]} '
 
