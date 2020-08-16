@@ -93,6 +93,8 @@ Currently, the following options are supported:
  - `access` to specify the permissions for the client. Supported values are
 `initiate` (to allow opening listening ports), `listen` (to allow
    connecting to listening ports), and `list` (to view all connected clients).
+   The value `denied` can be used to ban a key. A denied key will return
+   "permission denied".
    This option can be specified more than once, 
    to give more than one type of permission. New users are granted `initiate`
    and `listen` permissions by default.

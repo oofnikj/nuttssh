@@ -103,26 +103,29 @@ class NuttsshServer(asyncssh.SSHServer):
         peer_addr = self.conn.get_extra_info('peername')[0]
         keystr = key.export_public_key().decode().strip()
 
-        if self.authorized_keys is None:
+        try:
+            options = self.authorized_keys.validate(key, username, peer_addr)
+            if 'denied' in options.get('access'):
+                logging.debug("Rejecting key %s %s", keystr, username)
+                return False
+
+        except AttributeError: # options == None
             options = default_access
             logging.info('Adding new key for user %s with default permissions' % username)
             options_str = ','.join([f'{k}="{v}"' for k in default_access.keys() for v in default_access[k]])
             key_data = '%s %s %s@%s\n' % (options_str, keystr, username, peer_addr)
-            self.authorized_keys = asyncssh.import_authorized_keys(key_data)
+            if self.authorized_keys is None:
+                self.authorized_keys = asyncssh.import_authorized_keys(key_data)
+            else:
+                self.authorized_keys.load(key_data)
             with open(config.AUTHORIZED_KEYS_FILE, 'a') as f:
                 f.write(key_data)
-        else:
-            options = self.authorized_keys.validate(key, username, peer_addr)
 
-            # None means no matching key, so deny access
-            if options is None:
-                logging.debug("Rejecting key %s %s", keystr, username)
-                return False
 
-            logging.debug("Accepting key %s %s %s",
-                        str(options), keystr, username)
+        logging.debug("Accepting key %s %s %s",
+                    str(options), keystr, username)
 
-            self.process_key_options(options)
+        self.process_key_options(options)
 
         return True
 
