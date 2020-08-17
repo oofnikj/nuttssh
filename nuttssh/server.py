@@ -152,6 +152,7 @@ class NuttsshServer(asyncssh.SSHServer):
         self.aliases = options.get('alias', [])
         self.aliases.append(f'{self.hostname}-{util.rand_suffix()}')
         self.names = [self.hostname] + self.aliases
+        logging.debug(f'Aliases: {self.aliases}')
 
     def begin_auth(self, username):
         """The client has started authentication with the given username."""
