@@ -100,6 +100,8 @@ class NuttsshServer(asyncssh.SSHServer):
     def validate_public_key(self, username, key):
         """Called when the client presents a key for authentication."""
         # Look up the peer address, to support the "from" key option.
+        if not config.ENABLE_AUTH:
+            return True
         peer_addr = self.conn.get_extra_info('peername')[0]
         keystr = key.export_public_key().decode().strip()
 

@@ -14,3 +14,4 @@ AUTHORIZED_KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE',
                     f'{HOST_KEY_DIR}/authorized_keys')
 SERVER_FQDN = os.environ.get('SSH_SERVER_FQDN', 'localhost')
 ALLOW_PTY = False
+ENABLE_AUTH = False
