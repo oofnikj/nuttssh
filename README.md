@@ -204,10 +204,10 @@ the listening client. This also means that authentication must happen twice.
 SSH can also forward data on its stdin and stdout streams into a circuit. For
 example:
 
-    ssh -W user1:22 nuttssh.example.org -p 2222
+    ssh -W user1-a4h5ig8:6379 nuttssh.example.org -p 2222
 
 This opens a circuit to `user1` who is already connected and remote-forwarding
-port 22, and connects it to the stdin and stdout of the local ssh client.
+port 6379, and connects it to the stdin and stdout of the local ssh client.
 
 #### Routing a SOCKS proxy requests through a circuit
 
