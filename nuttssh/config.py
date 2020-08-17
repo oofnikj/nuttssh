@@ -13,3 +13,4 @@ HOST_KEY_FILE = ([os.environ.get('SSH_HOST_KEY_FILE_ECDSA',
 AUTHORIZED_KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE',
                     f'{HOST_KEY_DIR}/authorized_keys')
 SERVER_FQDN = os.environ.get('SSH_SERVER_FQDN', 'localhost')
+ALLOW_PTY = False
