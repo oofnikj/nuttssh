@@ -10,6 +10,8 @@ from . import util, config
 from .permissions import Permissions
 
 
+supported_commands = []
+
 async def handle_command(server, process, command):
     """
     Parse and handle a single command from a client.
@@ -23,7 +25,6 @@ async def handle_command(server, process, command):
                     the SSH client, or None when no command was passed (and a
                     shell was requested).
     """
-    supported_commands = ['listeners']
     process.stdout.write(f'Hello {server.username}!\n')
     if server.listeners:
         await forwarding(server, process)
@@ -40,7 +41,11 @@ async def handle_command(server, process, command):
     else:
         eval(f'{command}(server, process)')
 
+def register(func):
+    supported_commands.append(func.__name__)
+    return func
 
+@register
 def listeners(server, process):
     """List all active listeners."""
     # TODO: Put this in a decorator?
