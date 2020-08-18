@@ -18,6 +18,7 @@ try:
      ENABLE_AUTH = config.getboolean('server', 'enable_auth')
      ALLOW_PTY   = config.getboolean('server', 'allow_pty')
 
+     AUTHORIZED_KEYS_FILE = config.get('keys', 'authorized_keys_file')
      HOST_KEY_FILE = []
      for item in config.items('keys'):
           if item[0] not in ('host_key_dir', 'authorized_keys_file'):
