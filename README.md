@@ -135,7 +135,7 @@ Connections to the Nuttssh server use the normal SSH protocol, so can use a
 regular SSH client. To open up a listening port, the normal port forwarding
 options can be used. For example:
 
-    ssh -n user1@nuttssh.example.org -p 2222 -R 6379:localhost:6379
+    ssh user1@nuttssh.example.org -p 2222 -n -R 6379:localhost:6379
 
 This connects to a Nuttssh server running on `nuttssh.example.org` , port 2222.
 Our hostname ( `user1` ) is passed as the username. Use `-n` so we don't redirect
@@ -144,7 +144,7 @@ appending `&` to the command). Upon connecting, a (virtual) port 6379 is opened
 on the Nuttssh server, ready to forward to a client.
 Nuttssh will print out a command for a client to connect, something like
 
-    ssh -n user2@nuttssh.example.org -p 2222 -L 6379:user1-a4h5ig8:6379
+    ssh user2@nuttssh.example.org -p 2222 -N -L 6379:user1-a4h5ig8:6379
 
 The listener (user2) will then be able to connect to `localhost:6379` on
 user1's machine as if it were running on user2's `localhost:6379` .
@@ -167,7 +167,7 @@ host or port by specifying them with the `-R` option.
 
 For example:
 
-    ssh -n user1@nuttssh.example.org -p 2222 -R 9736:localhost:6379
+    ssh user1@nuttssh.example.org -p 2222 -n -R 9736:localhost:6379
 
 This requests a virtual port 9736 on the Nuttssh server and connects any incoming
 circuits to port 6379 on localhost. Note that this is completely invisible to
@@ -201,13 +201,17 @@ the listening client. This also means that authentication must happen twice.
 
 #### Forwarding stdin/stdout through a circuit
 
-SSH can also forward data on its stdin and stdout streams into a circuit. For
-example:
+SSH can also forward data on its stdin and stdout streams into a circuit.
+For example, `user1` opens a listening connection as above:
 
-    ssh -W user1-a4h5ig8:6379 nuttssh.example.org -p 2222
+    ssh user1@nuttssh.example.org -p 2222 -n -R 6379:localhost:6379
+
+Then `user2` connects to `user1`'s listener:
+
+    ssh user2@nuttssh.example.org -p 2222 -W user1-a4h5ig8:6379
 
 This opens a circuit to `user1` who is already connected and remote-forwarding
-port 6379, and connects it to the stdin and stdout of the local ssh client.
+port 6379, and connects it to the stdin and stdout of the local ssh client of `user2`.
 
 #### Routing a SOCKS proxy requests through a circuit
 
