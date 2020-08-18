@@ -43,7 +43,7 @@ async def handle_command(server, process, command):
 def listeners(server, process):
     """List all active listeners."""
     # TODO: Put this in a decorator?
-    if Permissions.LIST_LISTENERS not in server.permissions:
+    if config.ENABLE_AUTH and Permissions.LIST_LISTENERS not in server.permissions:
         process.stderr.write("Permission denied\n")
         process.exit(1)
         return
