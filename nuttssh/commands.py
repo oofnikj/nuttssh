@@ -69,7 +69,7 @@ def listeners(server, process):
                     connect_name = util.join_hostname_index(name, i)
 
                 line = "  {}: ip={} aliases={} ports={}\n".format(
-                    connect_name,
+                    i+1,
                     ip,
                     ','.join(s.aliases),
                     ','.join(str(p) for p in sorted(ports)),
