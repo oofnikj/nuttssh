@@ -60,10 +60,6 @@ def listeners(server, process):
     if names:
         for name in sorted(names.keys()):
             for i, s in enumerate(names[name]):
-                # TODO: Option to list aliases separately?
-                if name != s.hostname:
-                    continue
-
                 peername = s.conn.get_extra_info('peername')
                 ip = peername[0]
                 ports = (lp.listen_port for lp in s.listeners.values())
