@@ -1,17 +1,30 @@
 import os
+import sys
+import logging
+
+from configparser import ConfigParser, BasicInterpolation
 
 
-LISTEN_HOST = '0.0.0.0'
-LISTEN_PORT = int(os.environ.get('SSH_LISTEN_PORT', 2222))
-HOST_KEY_DIR = (os.environ.get('SSH_HOST_KEY_DIR', 'keys'))
-HOST_KEY_FILE = ([os.environ.get('SSH_HOST_KEY_FILE_ECDSA',
-                    f'{HOST_KEY_DIR}/ecdsa-sha2-nistp256')]
-               + [os.environ.get('SSH_HOST_KEY_FILE_ED25519',
-                    f'{HOST_KEY_DIR}/ssh-ed25519')]
-               + [os.environ.get('SSH_HOST_KEY_FILE_RSA',
-                    f'{HOST_KEY_DIR}/ssh-rsa')])
-AUTHORIZED_KEYS_FILE = os.environ.get('SSH_AUTHORIZED_KEYS_FILE',
-                    f'{HOST_KEY_DIR}/authorized_keys')
-SERVER_FQDN = os.environ.get('SSH_SERVER_FQDN', 'localhost')
-ALLOW_PTY = False
-ENABLE_AUTH = False
+config = ConfigParser(interpolation=BasicInterpolation())
+
+
+try:
+     config_file = os.environ.get('NUTTSSH_CONFIG_FILE', 'nuttssh.ini')
+     config.read_file(open(config_file, 'r'))
+
+     LISTEN_HOST = config.get('server', 'listen_host')
+     LISTEN_PORT = config.getint('server', 'listen_port')
+     SERVER_FQDN = config.get('server', 'server_fqdn')
+     ENABLE_AUTH = config.getboolean('server', 'enable_auth')
+     ALLOW_PTY   = config.getboolean('server', 'allow_pty')
+
+     HOST_KEY_FILE = []
+     for item in config.items('keys'):
+          if item[0] not in ('host_key_dir', 'authorized_keys_file'):
+               HOST_KEY_FILE.append(item[1])
+except FileNotFoundError:
+     logging.error(f'Config file "{config_file}" not found')
+     sys.exit(1)
+except Exception as e:
+     logging.error(f'Error parsing config file:\n{e}')
+     sys.exit(1)

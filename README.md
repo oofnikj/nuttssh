@@ -66,13 +66,13 @@ Host keys will be generated on first run and preserved in a Docker volume.
 
 ## Configuration
 
-Configuration is handled in `config.py`. Most parameters can be
-overridden with environment variables.
+Configuration is handled in the configuration file `nuttssh.ini`. The path
+to this file can be set by the environment variable `NUTTSSH_CONFIG_FILE`.
 
 ### Access control
 
 To control access to the nuttssh server, an `authorized_keys` file must be
-present. If it isn't, `nuttssh` will create a blank one. This file uses the same
+present. If it isn't, nuttssh will create a blank one. This file uses the same
 format as OpenSSH's `authorized_keys` file. Each line must contain a single
 public key (copied from e.g. the `id_rsa.pub` file). In front of the public
 key, options can be added.
