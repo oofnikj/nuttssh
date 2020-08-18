@@ -100,29 +100,29 @@ class NuttsshServer(asyncssh.SSHServer):
     def validate_public_key(self, username, key):
         """Called when the client presents a key for authentication."""
         # Look up the peer address, to support the "from" key option.
-        if not config.ENABLE_AUTH:
-            return True
+
         peer_addr = self.conn.get_extra_info('peername')[0]
         keystr = key.export_public_key().decode().strip()
+        if config.ENABLE_AUTH:
+            try:
+                options = self.authorized_keys.validate(key, username, peer_addr)
+                if 'denied' in options.get('access'):
+                    logging.debug("Rejecting key %s %s", keystr, username)
+                    return False
 
-        try:
-            options = self.authorized_keys.validate(key, username, peer_addr)
-            if 'denied' in options.get('access'):
-                logging.debug("Rejecting key %s %s", keystr, username)
-                return False
-
-        except AttributeError: # options == None
+            except AttributeError: # options == None
+                options = default_access
+                logging.info('Adding new key for user %s with default permissions' % username)
+                options_str = ','.join([f'{k}="{v}"' for k in default_access.keys() for v in default_access[k]])
+                key_data = '%s %s %s@%s\n' % (options_str, keystr, username, peer_addr)
+                if self.authorized_keys is None:
+                    self.authorized_keys = asyncssh.import_authorized_keys(key_data)
+                else:
+                    self.authorized_keys.load(key_data)
+                with open(config.AUTHORIZED_KEYS_FILE, 'a') as f:
+                    f.write(key_data)
+        else:
             options = default_access
-            logging.info('Adding new key for user %s with default permissions' % username)
-            options_str = ','.join([f'{k}="{v}"' for k in default_access.keys() for v in default_access[k]])
-            key_data = '%s %s %s@%s\n' % (options_str, keystr, username, peer_addr)
-            if self.authorized_keys is None:
-                self.authorized_keys = asyncssh.import_authorized_keys(key_data)
-            else:
-                self.authorized_keys.load(key_data)
-            with open(config.AUTHORIZED_KEYS_FILE, 'a') as f:
-                f.write(key_data)
-
 
         logging.debug("Accepting key %s %s %s",
                     str(options), keystr, username)
@@ -181,7 +181,7 @@ class NuttsshServer(asyncssh.SSHServer):
 
     def server_requested(self, listen_host, listen_port):
         """The client requested us to open a listening port."""
-        if Permissions.LISTEN not in self.permissions:
+        if config.ENABLE_AUTH and Permissions.LISTEN not in self.permissions:
             logging.error("No LISTEN permission, denying request")
             return False
 
@@ -205,7 +205,7 @@ class NuttsshServer(asyncssh.SSHServer):
         The original host and port indicate the source of the connection on
         client side (but are irrelevant here).
         """
-        if Permissions.INITIATE not in self.permissions:
+        if config.ENABLE_AUTH and Permissions.INITIATE not in self.permissions:
             logging.error("No INITIATE permission, denying request")
             raise asyncssh.ChannelOpenError(
                 asyncssh.SSH_OPEN_ADMINISTRATIVELY_PROHIBITED,
