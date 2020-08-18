@@ -27,7 +27,7 @@ async def handle_command(server, process, command):
     """
     process.stdout.write(f'Hello {server.username}!\n')
     if server.listeners:
-        await forwarding(server, process)
+        forwarding(server, process)
         return
 
     if command is None:
@@ -41,14 +41,13 @@ async def handle_command(server, process, command):
     else:
         eval(f'{command}(server, process)')
 
-def register(func):
+def register_command(func):
     supported_commands.append(func.__name__)
     return func
 
-@register
+@register_command
 def listeners(server, process):
     """List all active listeners."""
-    # TODO: Put this in a decorator?
     if (config.ENABLE_AUTH and Permissions.LIST_LISTENERS not in
             server.permissions):
         process.stderr.write("Permission denied\n")
@@ -84,8 +83,8 @@ def listeners(server, process):
         process.stdout.write("  None\n")
     process.exit(0)
 
-
-async def forwarding(server, process):
+@register_command
+def forwarding(server, process):
     server_alias = server.aliases[0]
     service_ports = list(server.listeners.keys())
     virtual_ports = [server.listeners[p].listen_port for p in service_ports]
@@ -97,5 +96,7 @@ async def forwarding(server, process):
     process.stdout.write(
         f'Virtual listener for ports {service_ports} created.\n'
         f'Connect a client by running\n  {client_conn_str}\n')
-    await process.wait_closed()
-    process.exit(0)
+
+@register_command
+def test(server, process):
+    return
