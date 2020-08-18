@@ -15,7 +15,7 @@ ignore =
     # Do not enforce docstrings in imperative mood, since some things
     # (main entry point, callbacks) are better with other comment
     # styles.
-    D401,
+    D401, E221
 
 # TODO: Enable B902, if https://github.com/PyCQA/flake8-bugbear/issues/19 is fixed
 

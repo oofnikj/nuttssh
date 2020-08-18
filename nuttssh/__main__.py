@@ -14,14 +14,15 @@ from . import server
 async def shutdown(signal, loop):
     logging.error(f"Received signal {signal.name}, shutting down")
     tasks = [task for task in asyncio.all_tasks()
-        if task is not asyncio.current_task()]
-    
+             if task is not asyncio.current_task()]
+
     for task in tasks:
         logging.debug("Cancelling task %s" % task)
         task.cancel()
-    
+
     await asyncio.gather(*tasks, return_exceptions=True)
     loop.stop()
+
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -41,5 +42,6 @@ def main():
         sys.exit('Error starting server: ' + str(exc))
     finally:
         loop.close()
+
 
 main()

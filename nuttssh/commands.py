@@ -30,7 +30,8 @@ async def handle_command(server, process, command):
         return
 
     if command is None:
-        process.stderr.write('This server does not support interactive sessions.\r\n')
+        process.stderr.write('This server does not support'
+                             ' interactive sessions.\r\n')
 
     elif command not in supported_commands:
         process.stderr.write('Unsupported command.\r\n')
@@ -43,7 +44,8 @@ async def handle_command(server, process, command):
 def listeners(server, process):
     """List all active listeners."""
     # TODO: Put this in a decorator?
-    if config.ENABLE_AUTH and Permissions.LIST_LISTENERS not in server.permissions:
+    if (config.ENABLE_AUTH and Permissions.LIST_LISTENERS not in
+            server.permissions):
         process.stderr.write("Permission denied\n")
         process.exit(1)
         return
@@ -60,7 +62,7 @@ def listeners(server, process):
 
                 peername = s.conn.get_extra_info('peername')
                 ip = peername[0]
-                ports = (l.listen_port for l in s.listeners.values())
+                ports = (lp.listen_port for lp in s.listeners.values())
                 if i == 0:
                     connect_name = name
                 else:
@@ -84,9 +86,11 @@ async def forwarding(server, process):
     virtual_ports = [server.listeners[p].listen_port for p in service_ports]
     client_conn_str = f'ssh -n {config.SERVER_FQDN} -p {config.LISTEN_PORT} '
     for idx, p in enumerate(service_ports):
-        client_conn_str += f'-L {service_ports[idx]}:{server_alias}:{virtual_ports[idx]} '
+        client_conn_str += (
+            f'-L {service_ports[idx]}:{server_alias}:{virtual_ports[idx]} ')
 
-    process.stdout.write(f'Virtual listener for ports {service_ports} created.\n'
-        + f'Connect a client by running\n  {client_conn_str}\n')
+    process.stdout.write(
+        f'Virtual listener for ports {service_ports} created.\n'
+        f'Connect a client by running\n  {client_conn_str}\n')
     await process.wait_closed()
     process.exit(0)

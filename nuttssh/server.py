@@ -12,7 +12,7 @@ import collections
 import asyncssh
 
 from . import util, commands, config
-from .permissions import *
+from .permissions import Permissions, access_levels, default_access
 
 
 class NuttsshDaemon:
@@ -42,12 +42,12 @@ class NuttsshDaemon:
                 key = asyncssh.generate_private_key(algs[i])
                 server_host_keys.append(key)
                 open(keyfile, 'w').write(key.export_private_key().decode())
-                open(f'{keyfile}.pub', 'w').write(key.export_public_key().decode())
+                open(f'{keyfile}.pub', 'w').write(
+                    key.export_public_key().decode())
                 os.chmod(keyfile, 0o600)
 
-
-
-        await asyncssh.listen(config.LISTEN_HOST, config.LISTEN_PORT,
+        await asyncssh.listen(
+            config.LISTEN_HOST, config.LISTEN_PORT,
             server_host_keys=server_host_keys,
             server_factory=server_factory,
             allow_pty=config.ALLOW_PTY)
@@ -105,18 +105,25 @@ class NuttsshServer(asyncssh.SSHServer):
         keystr = key.export_public_key().decode().strip()
         if config.ENABLE_AUTH:
             try:
-                options = self.authorized_keys.validate(key, username, peer_addr)
+                options = self.authorized_keys.validate(key, username,
+                                                        peer_addr)
                 if 'denied' in options.get('access'):
                     logging.debug("Rejecting key %s %s", keystr, username)
                     return False
 
-            except AttributeError: # options == None
+            except AttributeError:  # options == None
                 options = default_access
-                logging.info('Adding new key for user %s with default permissions' % username)
-                options_str = ','.join([f'{k}="{v}"' for k in default_access.keys() for v in default_access[k]])
-                key_data = '%s %s %s@%s\n' % (options_str, keystr, username, peer_addr)
+                logging.info(
+                    'Adding new key for user %s with default permissions'
+                    % username)
+                options_str = ','.join(
+                    [f'{k}="{v}"' for k in default_access.keys()
+                        for v in default_access[k]])
+                key_data = '%s %s %s@%s\n' % (options_str, keystr,
+                                              username, peer_addr)
                 if self.authorized_keys is None:
-                    self.authorized_keys = asyncssh.import_authorized_keys(key_data)
+                    self.authorized_keys = (
+                        asyncssh.import_authorized_keys(key_data))
                 else:
                     self.authorized_keys.load(key_data)
                 with open(config.AUTHORIZED_KEYS_FILE, 'a') as f:
@@ -125,7 +132,7 @@ class NuttsshServer(asyncssh.SSHServer):
             options = default_access
 
         logging.debug("Accepting key %s %s %s",
-                    str(options), keystr, username)
+                      str(options), keystr, username)
 
         self.process_key_options(options)
 
@@ -160,7 +167,8 @@ class NuttsshServer(asyncssh.SSHServer):
         """The client has started authentication with the given username."""
         self.username = username
         try:
-            self.authorized_keys = asyncssh.read_authorized_keys(config.AUTHORIZED_KEYS_FILE)
+            self.authorized_keys = asyncssh.read_authorized_keys(
+                config.AUTHORIZED_KEYS_FILE)
         except FileNotFoundError:
             logging.info("Generating authorized keys file")
             with open(config.AUTHORIZED_KEYS_FILE, 'w'):
