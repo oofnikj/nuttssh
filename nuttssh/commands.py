@@ -6,11 +6,14 @@
 # This file handles commands that can be executed through SSH, to inspect and
 # administrate the server.
 
+import cmd
+import logging
+from asyncssh import BreakReceived, misc
 from . import util, config
 from .permissions import Permissions
 
-
 supported_commands = []
+
 
 async def handle_command(server, process, command):
     """
@@ -25,34 +28,42 @@ async def handle_command(server, process, command):
                     the SSH client, or None when no command was passed (and a
                     shell was requested).
     """
-    process.stdout.write(f'Hello {server.username}!\n')
+    process.stdout.write(f'Hello {server.username}\r\n')
     if server.listeners:
         forwarding(server, process)
         return
 
     if command is None:
-        process.stderr.write('This server does not support'
-                             ' interactive sessions.\r\n')
-        process.exit(1)
+        if config.ENABLE_SHELL:
+            await shell(server, process)
+
+        else:
+            process.stderr.write('This server does not support'
+                                 ' interactive sessions.\r\n')
+            logging.warning('Interactive shell disabled')
+            process.exit(1)
 
     elif command not in supported_commands:
-        process.stderr.write('Unsupported command.\r\n')
+        process.stderr.write('Unsupported command\n')
         process.exit(1)
 
     else:
         eval(f'{command}(server, process)')
+        process.exit(0)
+
 
 def register_command(func):
+    """Register command in the list of supported commands"""
     supported_commands.append(func.__name__)
     return func
+
 
 @register_command
 def listeners(server, process):
     """List all active listeners."""
     if (config.ENABLE_AUTH and Permissions.LIST_LISTENERS not in
             server.permissions):
-        process.stderr.write("Permission denied\n")
-        process.exit(1)
+        process.stderr.write("Permission denied\r\n")
         return
 
     process.stdout.write("Listening clients:\n")
@@ -70,7 +81,7 @@ def listeners(server, process):
                     connect_name = util.join_hostname_index(name, i)
 
                 line = "  {}: ip={} aliases={} ports={}\n".format(
-                    i+1,
+                    connect_name,
                     ip,
                     ','.join(s.aliases),
                     ','.join(str(p) for p in sorted(ports)),
@@ -78,9 +89,10 @@ def listeners(server, process):
                 process.stdout.write(line)
     else:
         process.stdout.write("  None\n")
-    process.exit(0)
+
 
 def forwarding(server, process):
+    """Display forwarding instructions"""
     server_alias = server.aliases[0]
     service_ports = list(server.listeners.keys())
     virtual_ports = [server.listeners[p].listen_port for p in service_ports]
@@ -92,3 +104,56 @@ def forwarding(server, process):
     process.stdout.write(
         f'Virtual listener for ports {service_ports} created.\n'
         f'Connect a client by running\n  {client_conn_str}\n')
+
+
+class NuttShell(cmd.Cmd):
+    # prompt = "\x1b[1m>\x1b[0m "
+    prompt = "🥜 "
+    intro = "type 'help' to get a list of commands\n"
+
+    def __init__(self, server, process):
+        self.server = server
+        self.process = process
+        self.use_rawinput = False
+        self.stdin = process.stdin
+        self.stdout = process.stdout
+        self.cmdqueue = []
+        self.completekey = 'tab'
+
+    def do_quit(self, arg):
+        '''exit the shell'''
+        self.stdout.write('Exiting\n')
+        self.process.exit(0)
+
+    def do_listeners(self, arg=None):
+        '''show active listeners'''
+        listeners(self.server, self.process)
+
+    def do_whoami(self, arg):
+        '''print the current user's information'''
+        self.stdout.write(
+            f'User name: {self.server.username}\n'
+            f'Aliases: {",".join(self.server.aliases)}\n'
+            f'Permissions: {[p.name for p in self.server.permissions]}\n'
+        )
+
+
+async def shell(server, process):
+    if config.ENABLE_AUTH and Permissions.ADMIN not in server.permissions:
+        process.stdout.write("Permission denied\n")
+        process.exit(1)
+        return
+    ns = NuttShell(server, process)
+    # ns.cmdloop()
+    # cmdloop() doesn't know how to deal with async so we fake it
+    process.stdout.write(ns.intro)
+    while True:
+        try:
+            process.stdout.write(ns.prompt)
+            line = (await process.stdin.readline())
+            ns.onecmd(line)
+        except (BrokenPipeError, BreakReceived):
+            break
+        except misc.TerminalSizeChanged:
+            pass
+    process.exit(0)

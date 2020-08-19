@@ -8,6 +8,8 @@ class Permissions(enum.Enum):
     INITIATE = 2
     # Connecting to (virtual) ports
     LIST_LISTENERS = 3
+    # Admin shell
+    ADMIN = 4
 
 
 """
@@ -17,6 +19,7 @@ access_levels = {
     'listen': {Permissions.LISTEN},
     'initiate': {Permissions.INITIATE},
     'list': {Permissions.LIST_LISTENERS},
+    'admin': {Permissions.ADMIN},
 }
 
 """
