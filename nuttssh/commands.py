@@ -151,9 +151,14 @@ async def shell(server, process):
         try:
             process.stdout.write(ns.prompt)
             line = (await process.stdin.readline())
+            # can happen if socket was closed prematurely, user enters ^D,
+            # or if someone decided to pipe /dev/null into our shell
+            if not line or process._recv_buf_len > 4096:
+                raise BrokenPipeError
             ns.onecmd(line)
-        except (BrokenPipeError, BreakReceived):
+        except BrokenPipeError:
             break
-        except misc.TerminalSizeChanged:
+        except (BreakReceived, misc.TerminalSizeChanged):
+            process.stdout.write('\n')
             pass
     process.exit(0)
