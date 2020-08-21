@@ -157,14 +157,19 @@ async def shell(server, process):
             if not line:
                 break
 
+            if server.conn._transport._closing:
+                raise BrokenPipeError(
+                    'Transport is no longer open')
+
             if process._recv_buf_len > 4096:
-                process.close()
                 raise BrokenPipeError(
                     'Buffer size for interactive shell exceeded: ',
                     str(process._recv_buf_len))
+
             ns.onecmd(line)
 
         except BrokenPipeError as e:
+            process.exit(1)
             process.logger.error(''.join(e.args))
             break
 
