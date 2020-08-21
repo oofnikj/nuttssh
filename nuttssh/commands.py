@@ -120,6 +120,9 @@ class NuttShell(cmd.Cmd):
         self.cmdqueue = []
         self.completekey = 'tab'
 
+    def emptyline(self):
+        return
+
     def do_quit(self, arg):
         '''exit the shell'''
         self.stdout.write('Exiting\n')
