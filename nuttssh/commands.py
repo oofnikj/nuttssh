@@ -112,13 +112,12 @@ class NuttShell(cmd.Cmd):
     intro = "type 'help' to get a list of commands\n"
 
     def __init__(self, server, process):
+        super().__init__()
         self.server = server
         self.process = process
         self.use_rawinput = False
         self.stdin = process.stdin
         self.stdout = process.stdout
-        self.cmdqueue = []
-        self.completekey = 'tab'
 
     def emptyline(self):
         return
