@@ -149,17 +149,25 @@ async def shell(server, process):
     # ns.cmdloop()
     # cmdloop() doesn't know how to deal with async so we fake it
     process.stdout.write(ns.intro)
+
     while True:
         try:
             process.stdout.write(ns.prompt)
             line = (await process.stdin.readline())
-            # can happen if socket was closed prematurely, user enters ^D,
-            # or if someone decided to pipe /dev/null into our shell
-            if not line or process._recv_buf_len > 4096:
-                raise BrokenPipeError
+            if not line:
+                break
+
+            if process._recv_buf_len > 4096:
+                process.close()
+                raise BrokenPipeError(
+                    'Buffer size for interactive shell exceeded: ',
+                    str(process._recv_buf_len))
             ns.onecmd(line)
-        except BrokenPipeError:
+
+        except BrokenPipeError as e:
+            process.logger.error(''.join(e.args))
             break
+
         except (BreakReceived, misc.TerminalSizeChanged):
             process.stdout.write('\n')
             pass
