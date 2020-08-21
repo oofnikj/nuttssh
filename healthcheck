@@ -1,0 +1,2 @@
+#!/bin/sh
+nc localhost 2222 </dev/null | grep -q 'SSH-2.0-AsyncSSH_'
