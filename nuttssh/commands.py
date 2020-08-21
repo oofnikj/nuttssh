@@ -119,6 +119,41 @@ class NuttShell(cmd.Cmd):
         self.stdin = process.stdin
         self.stdout = process.stdout
 
+    async def cmdloop(self):
+        if (config.ENABLE_AUTH and Permissions.ADMIN
+                not in self.server.permissions):
+            self.process.stdout.write("Permission denied\n")
+            self.process.exit(1)
+
+        self.process.stdout.write(self.intro)
+
+        while True:
+            try:
+                self.process.stdout.write(self.prompt)
+                line = (await self.process.stdin.readline())
+                if not line:
+                    break
+
+                if self.server.conn._transport._closing:
+                    raise BrokenPipeError(
+                        'Transport is no longer open')
+
+                if self.process._recv_buf_len > 4096:
+                    raise BrokenPipeError(
+                        'Buffer size for interactive shell exceeded: ',
+                        str(self.process._recv_buf_len))
+
+                self.onecmd(line)
+
+            except BrokenPipeError as e:
+                self.process.exit(1)
+                self.process.logger.error(''.join(e.args))
+                break
+
+            except (BreakReceived, misc.TerminalSizeChanged):
+                self.process.stdout.write('\n')
+                pass
+
     def emptyline(self):
         return
 
@@ -141,39 +176,6 @@ class NuttShell(cmd.Cmd):
 
 
 async def shell(server, process):
-    if config.ENABLE_AUTH and Permissions.ADMIN not in server.permissions:
-        process.stdout.write("Permission denied\n")
-        process.exit(1)
-        return
     ns = NuttShell(server, process)
-    # ns.cmdloop()
-    # cmdloop() doesn't know how to deal with async so we fake it
-    process.stdout.write(ns.intro)
-
-    while True:
-        try:
-            process.stdout.write(ns.prompt)
-            line = (await process.stdin.readline())
-            if not line:
-                break
-
-            if server.conn._transport._closing:
-                raise BrokenPipeError(
-                    'Transport is no longer open')
-
-            if process._recv_buf_len > 4096:
-                raise BrokenPipeError(
-                    'Buffer size for interactive shell exceeded: ',
-                    str(process._recv_buf_len))
-
-            ns.onecmd(line)
-
-        except BrokenPipeError as e:
-            process.exit(1)
-            process.logger.error(''.join(e.args))
-            break
-
-        except (BreakReceived, misc.TerminalSizeChanged):
-            process.stdout.write('\n')
-            pass
+    await ns.cmdloop()
     process.exit(0)
