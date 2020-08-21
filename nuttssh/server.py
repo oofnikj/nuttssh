@@ -112,6 +112,9 @@ class NuttsshServer(asyncssh.SSHServer):
                     return False
 
             except AttributeError:  # options == None
+                if not config.ALLOW_NEW_CLIENTS:
+                    return False
+
                 options = default_access
                 logging.info(
                     'Adding new key for user %s with default permissions'
