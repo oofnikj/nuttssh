@@ -1,4 +1,5 @@
 Dockerfile
+docker-compose.yaml
 .dockerignore
 .vscode
 venv
