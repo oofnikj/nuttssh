@@ -1,29 +1,52 @@
+variables:
+  CI_IMAGE: $DOCKER_HUB_USER/nuttssh
+
 before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_TOKEN
   - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   - docker buildx create --use
-  - docker buildx ls
 
 build-master:
-  image: oofnik/docker:buildx
+  image: $DOCKER_HUB_USER/docker:buildx
   stage: build
   services:
     - name: docker:dind
   script:
     - >-
-      docker buildx build --push -t "$CI_REGISTRY_IMAGE"
+      docker buildx build --push -t "$CI_IMAGE"
       --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6 .
   only:
     - master
 
-build-feature:
-  image: oofnik/docker:buildx
+.build-feature: &build
+  image: $DOCKER_HUB_USER/docker:buildx
   stage: build
   services:
     - docker:dind
+  variables:
+    PLATFORM: linux/amd64
   script:
-    - >-
-      docker buildx build --push -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-      --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6 .
+    - docker buildx build --push -t "$CI_IMAGE:$CI_COMMIT_REF_SLUG" 
+      --platform $PLATFORM .
   except:
     - master
+
+build-amd64:
+  <<: *build
+  variables:
+    PLATFORM: linux/amd64
+
+build-arm64:
+  <<: *build
+  variables:
+    PLATFORM: linux/arm64
+
+build-armv6:
+  <<: *build
+  variables:
+    PLATFORM: linux/arm/v6
+
+build-armv7:
+  <<: *build
+  variables:
+    PLATFORM: linux/arm/v7
