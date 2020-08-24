@@ -18,35 +18,15 @@ build-master:
   only:
     - master
 
-.build-feature: &build
+build-feature:
   image: $DOCKER_HUB_USER/docker:buildx
   stage: build
   services:
     - docker:dind
   variables:
-    PLATFORM: linux/amd64
+    PLATFORM: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
   script:
     - docker buildx build --push -t "$CI_IMAGE:$CI_COMMIT_REF_SLUG" 
-      --platform $PLATFORM . --cache-from "$CI_IMAGE:CI_COMMIT_REF_SLUG"
+      --platform "$PLATFORM" --cache-from "$CI_IMAGE:$CI_COMMIT_REF_SLUG" .
   except:
     - master
-
-build-amd64:
-  <<: *build
-  variables:
-    PLATFORM: linux/amd64
-
-build-arm64:
-  <<: *build
-  variables:
-    PLATFORM: linux/arm64
-
-build-armv6:
-  <<: *build
-  variables:
-    PLATFORM: linux/arm/v6
-
-build-armv7:
-  <<: *build
-  variables:
-    PLATFORM: linux/arm/v7
