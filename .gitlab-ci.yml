@@ -27,7 +27,7 @@ build-master:
     PLATFORM: linux/amd64
   script:
     - docker buildx build --push -t "$CI_IMAGE:$CI_COMMIT_REF_SLUG" 
-      --platform $PLATFORM .
+      --platform $PLATFORM . --cache-from "$CI_IMAGE:CI_COMMIT_REF_SLUG"
   except:
     - master
 
