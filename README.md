@@ -1,7 +1,7 @@
 Nuttssh - SSH-based virtual tunnel switchboard server
 =====================================================
 
-![https://gitlab.com/oofnik/nuttssh/container_registry/](https://gitlab.com/oofnik/nuttssh/badges/master/pipeline.svg)
+[![pipeline status](https://gitlab.com/oofnik/nuttssh/badges/master/pipeline.svg)](https://gitlab.com/oofnik/nuttssh/-/commits/master)
 
 Nuttssh is a small Python-based SSH server that internally connects forwarded
 ports between different SSH clients. It was designed to work as a way to
